@@ -5,33 +5,41 @@ const dotenv = require("dotenv").config();
 
 //Login
 async function login(request, response) {
-  const user = await models.User.findOne({
-    where: { email: request.body.email },
-  }); //Email must be unique
-  if (user) {
-    const password_valid = await bcrypt.compare(
+  try {
+    const user = await models.User.findOne({
+      where: { email: request.body.email },
+    });
+
+    if (!user) {
+      return response.status(404).json({ message: "User does not exist" });
+    }
+
+    const passwordValid = await bcrypt.compare(
       request.body.password,
       user.password
     );
-    if (password_valid) {
-      token = jwt.sign(
-        {
-          id: user.id,
-          email: user.email,
-          userName: user.userName,
-        },
-        process.env.SECRET
-      );
-      response.status(200).json({
-        message: "Login Successful!",
-        userId: user.id,
-        token: token,
-      });
-    } else {
-      response.status(400).json({ message: "Incorrect Password" });
+
+    if (!passwordValid) {
+      return response.status(400).json({ message: "Incorrect Password" });
     }
-  } else {
-    response.status(404).json({ message: "User does not exist" });
+
+    const token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        userName: user.userName,
+      },
+      process.env.SECRET
+    );
+
+    response.status(200).json({
+      message: "Login Successful!",
+      userId: user.id,
+      token: token,
+    });
+  } catch (error) {
+    console.error("Error during login:", error);
+    response.status(500).json({ message: "Internal Server Error" });
   }
 }
 
