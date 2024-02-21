@@ -26,17 +26,17 @@ async function login(request, response) {
     const token = jwt.sign(
       {
         id: user.id,
-        email: user.email,
         userName: user.userName,
+        accountType: user.accountType,
       },
       process.env.SECRET
     );
 
     response.status(200).json({
       message: "Login Successful!",
-      userId: user.id,
       token: token,
-    });
+    }); 
+
   } catch (error) {
     console.error("Error during login:", error);
     response.status(500).json({ message: "Internal Server Error" });
@@ -50,6 +50,7 @@ async function add_user(request, response) {
     const user_data = {
       userName: request.body.userName,
       email: request.body.email,
+      accountType: request.body.accountType,
       password: await bcrypt.hash(request.body.password, salt),
     };
     const created_user = await models.User.create(user_data);
